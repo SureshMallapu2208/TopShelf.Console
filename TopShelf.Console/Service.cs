@@ -1,25 +1,30 @@
-﻿using System.ServiceProcess;
-using Topshelf;
-using TopShelf.Console;
+using Microsoft.Win32;
+using System;
+using System.Timers;
+using System.IO;
+using System.Linq;
 
 namespace TopShelf.Console
 {
-    internal class Service : ServiceControl
+    internal class Service 
     {
 
-        public bool Start(HostControl hostControl)
+        private readonly System.Timers.Timer _timer;
+        public Service()
         {
-            WriteToFile("Service started. Timestamp " + DateTime.Now);
-            return true; 
+            _timer = new System.Timers.Timer(2000) { AutoReset = true };
+            _timer.Elapsed += ExecuteEvent;
+        }
+        public void Stop()
+        {
+            _timer.Stop();
+        }
+        public void Start()
+        {
+            _timer.Start();
         }
 
-        public bool Stop(HostControl hostControl)
-        {
-            WriteToFile("Service stopped. Timestamp " + DateTime.Now);
-            return true;
-        }
-
-        public void WriteToFile(string Message)
+        private void ExecuteEvent(object sender, ElapsedEventArgs e)
         {
             string path = AppDomain.CurrentDomain.BaseDirectory + "\\LocalLog";
             if (!Directory.Exists(path))
@@ -32,20 +37,16 @@ namespace TopShelf.Console
                 // Create a file to write to.   
                 using (StreamWriter sw = File.CreateText(filepath))
                 {
-                    sw.WriteLine(Message);
+                    sw.WriteLine("Service Running :" + DateTime.Now.ToString());
                 }
             }
             else
             {
                 using (StreamWriter sw = File.AppendText(filepath))
                 {
-                    sw.WriteLine(Message);
+                    sw.WriteLine("Service Running :" + DateTime.Now.ToString());
                 }
             }
         }
     }
 }
-
-//.ConstructUsing(s => new Service());
-//service.WhenStarted(s => s.Start());
-//service.WhenStopped(s => s.Stop());
